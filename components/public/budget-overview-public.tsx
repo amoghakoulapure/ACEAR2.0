@@ -78,7 +78,7 @@ export function BudgetOverviewPublic() {
                   cx="50%"
                   cy="50%"
                   labelLine={false}
-                  label={({ category, percentage }) => `${category} ${percentage.toFixed(1)}%`}
+                  label={(props: any) => `${props.category ?? ''} ${(props.percentage ?? 0).toFixed(1)}%`}
                   outerRadius={80}
                   fill="#8884d8"
                   dataKey="allocated"
@@ -87,7 +87,7 @@ export function BudgetOverviewPublic() {
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Pie>
-                <Tooltip formatter={(value: number) => [`$${value.toLocaleString()}`, "Allocated"]} />
+                <Tooltip formatter={(value: number) => [`₹${value.toLocaleString()}`, "Allocated"]} />
                 <Legend />
               </PieChart>
             </ResponsiveContainer>
@@ -110,7 +110,7 @@ export function BudgetOverviewPublic() {
                     <div>
                       <h4 className="font-medium">{category.category}</h4>
                       <p className="text-sm text-muted-foreground">
-                        ${category.spent.toLocaleString()} of ${category.allocated.toLocaleString()}
+                        ₹{category.spent.toLocaleString()} of ₹{category.allocated.toLocaleString()}
                       </p>
                     </div>
                     <div className="text-right">

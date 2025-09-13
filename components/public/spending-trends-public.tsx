@@ -78,10 +78,10 @@ export function SpendingTrendsPublic() {
             <LineChart data={data} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="month" />
-              <YAxis tickFormatter={(value) => `$${(value / 1000).toFixed(0)}K`} />
+              <YAxis tickFormatter={(value) => `₹${(value / 1000).toFixed(0)}K`} />
               <Tooltip
                 formatter={(value: number, name: string) => [
-                  `$${value.toLocaleString()}`,
+                  `₹${value.toLocaleString()}`,
                   name === "spending" ? "Monthly Spending" : "Cumulative Spending",
                 ]}
               />

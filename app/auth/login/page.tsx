@@ -36,12 +36,12 @@ export default function LoginPage() {
         email,
         password,
       })
+      
       if (error) throw error
 
-      await new Promise((resolve) => setTimeout(resolve, 500))
+      // Direct navigation to dashboard
+      window.location.href = "/dashboard"
 
-      // Force a hard refresh to ensure middleware picks up the new session
-      window.location.replace("/dashboard")
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : "An error occurred"
       if (errorMessage.includes("Invalid email")) {

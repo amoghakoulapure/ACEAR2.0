@@ -19,10 +19,15 @@ export async function DepartmentBreakdownPublic() {
   // Group by department
   const departmentTotals = departmentData?.reduce(
     (acc, item) => {
-      const dept = item.departments
-      if (!dept) return acc
+      let dept: { name: string; code: string; type: string; description: string } | undefined;
+      if (Array.isArray(item.departments)) {
+        dept = item.departments[0] as { name: string; code: string; type: string; description: string };
+      } else {
+        dept = item.departments as { name: string; code: string; type: string; description: string };
+      }
+      if (!dept || typeof dept !== 'object' || !('name' in dept)) return acc;
 
-      const key = dept.name
+      const key = dept.name;
       if (!acc[key]) {
         acc[key] = {
           name: dept.name,
@@ -31,23 +36,13 @@ export async function DepartmentBreakdownPublic() {
           description: dept.description,
           allocated: 0,
           spent: 0,
-        }
+        };
       }
-      acc[key].allocated += Number(item.allocated_amount)
-      acc[key].spent += Number(item.spent_amount)
-      return acc
+      acc[key].allocated += Number(item.allocated_amount);
+      acc[key].spent += Number(item.spent_amount);
+      return acc;
     },
-    {} as Record<
-      string,
-      {
-        name: string
-        code: string
-        type: string
-        description: string
-        allocated: number
-        spent: number
-      }
-    >,
+    {} as Record<string, { name: string; code: string; type: string; description: string; allocated: number; spent: number }>,
   )
 
   const departments = Object.values(departmentTotals || {}).sort((a, b) => b.allocated - a.allocated)
@@ -69,7 +64,7 @@ export async function DepartmentBreakdownPublic() {
             <GraduationCap className="h-6 w-6 text-blue-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-blue-900">${totalAcademic.toLocaleString()}</div>
+            <div className="text-3xl font-bold text-blue-900">₹{totalAcademic.toLocaleString()}</div>
             <p className="text-sm text-blue-700 mt-2">
               {((totalAcademic / grandTotal) * 100).toFixed(1)}% of total budget
             </p>
@@ -83,7 +78,7 @@ export async function DepartmentBreakdownPublic() {
             <Building className="h-6 w-6 text-green-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-green-900">${totalSupport.toLocaleString()}</div>
+            <div className="text-3xl font-bold text-green-900">₹{totalSupport.toLocaleString()}</div>
             <p className="text-sm text-green-700 mt-2">
               {((totalSupport / grandTotal) * 100).toFixed(1)}% of total budget
             </p>
@@ -113,7 +108,7 @@ export async function DepartmentBreakdownPublic() {
                       </Badge>
                     </div>
                     <div className="text-right">
-                      <div className="text-xl font-bold">${dept.allocated.toLocaleString()}</div>
+                      <div className="text-xl font-bold">₹{dept.allocated.toLocaleString()}</div>
                       <div className="text-sm text-muted-foreground">Budget</div>
                     </div>
                   </div>
@@ -123,7 +118,7 @@ export async function DepartmentBreakdownPublic() {
                   <div className="space-y-2">
                     <div className="flex justify-between text-sm">
                       <span>Invested:</span>
-                      <span className="font-medium">${dept.spent.toLocaleString()}</span>
+                      <span className="font-medium">₹{dept.spent.toLocaleString()}</span>
                     </div>
                     <Progress value={utilizationRate} className="h-2" />
                     <div className="text-xs text-muted-foreground text-center">
@@ -158,7 +153,7 @@ export async function DepartmentBreakdownPublic() {
                       </Badge>
                     </div>
                     <div className="text-right">
-                      <div className="text-xl font-bold">${dept.allocated.toLocaleString()}</div>
+                      <div className="text-xl font-bold">₹{dept.allocated.toLocaleString()}</div>
                       <div className="text-sm text-muted-foreground">Budget</div>
                     </div>
                   </div>
@@ -168,7 +163,7 @@ export async function DepartmentBreakdownPublic() {
                   <div className="space-y-2">
                     <div className="flex justify-between text-sm">
                       <span>Invested:</span>
-                      <span className="font-medium">${dept.spent.toLocaleString()}</span>
+                      <span className="font-medium">₹{dept.spent.toLocaleString()}</span>
                     </div>
                     <Progress value={utilizationRate} className="h-2" />
                     <div className="text-xs text-muted-foreground text-center">

@@ -70,7 +70,7 @@ export function FundSourcesPublic() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-3xl font-bold text-gray-900">${totalFunding.toLocaleString()}</div>
+          <div className="text-3xl font-bold text-gray-900">₹{totalFunding.toLocaleString()}</div>
           <p className="text-gray-600 mt-2">
             Diversified funding from {fundSources.length} sources supporting education, research, and operations
           </p>
@@ -93,7 +93,7 @@ export function FundSourcesPublic() {
                     <Badge className={getFundTypeColor(fund.type)}>{fund.type.replace("_", " ").toUpperCase()}</Badge>
                   </div>
                   <div className="text-right">
-                    <div className="text-2xl font-bold">${Number(fund.total_amount).toLocaleString()}</div>
+                    <div className="text-2xl font-bold">₹{Number(fund.total_amount).toLocaleString()}</div>
                     <div className="text-sm text-muted-foreground">Total Amount</div>
                   </div>
                 </div>
@@ -106,13 +106,13 @@ export function FundSourcesPublic() {
                     <div className="flex justify-between text-sm">
                       <span>Utilized:</span>
                       <span className="font-medium">
-                        ${(Number(fund.total_amount) - Number(fund.available_amount)).toLocaleString()}
+                        ₹{(Number(fund.total_amount) - Number(fund.available_amount)).toLocaleString()}
                       </span>
                     </div>
                     <div className="flex justify-between text-sm">
                       <span>Available:</span>
                       <span className="font-medium text-green-600">
-                        ${Number(fund.available_amount).toLocaleString()}
+                        ₹{Number(fund.available_amount).toLocaleString()}
                       </span>
                     </div>
                     <Progress value={utilizationRate} className="h-2" />

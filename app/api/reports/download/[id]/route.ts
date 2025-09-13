@@ -23,12 +23,13 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
     // 3. Return the file with appropriate headers
 
     // For demo purposes, return a simple response
-    const reportContent = `Financial Report ${reportId}
+  const reportContent = `Financial Report ${reportId}
 Generated: ${new Date().toISOString()}
 User: ${user.email}
 
 This is a sample report. In a real application, this would contain
-the actual financial data formatted according to the requested type.`
+the actual financial data formatted according to the requested type.
+All amounts are shown in ₹ (Indian Rupees).`
 
     return new NextResponse(reportContent, {
       headers: {
