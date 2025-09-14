@@ -1,64 +1,43 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import { createClient } from "@/lib/supabase/client"
+import { useTransparencyData } from "./transparency-data-context"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
 import { Calendar, DollarSign } from "lucide-react"
 
-interface FundSource {
-  id: string
-  name: string
-  type: string
-  total_amount: number
-  available_amount: number
-  description: string
-  grant_period_start?: string
-  grant_period_end?: string
-}
+// Use shared context type
 
 export function FundSourcesPublic() {
-  const [fundSources, setFundSources] = useState<FundSource[]>([])
-  const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    async function fetchData() {
-      const supabase = createClient()
-
-      const { data } = await supabase.from("fund_sources").select("*").order("total_amount", { ascending: false })
-
-      if (data) {
-        setFundSources(data)
-      }
-      setLoading(false)
-    }
-
-    fetchData()
-  }, [])
+  const { fundingSources, setFundingSources } = useTransparencyData() || {};
+  const loading = !fundingSources;
 
   const getFundTypeColor = (type: string) => {
     switch (type) {
       case "government_grants":
-        return "bg-blue-100 text-blue-800"
+        return "bg-blue-100 text-blue-800";
       case "tuition_fees":
-        return "bg-green-100 text-green-800"
+        return "bg-green-100 text-green-800";
       case "donations":
-        return "bg-purple-100 text-purple-800"
+        return "bg-purple-100 text-purple-800";
       case "research_grants":
-        return "bg-orange-100 text-orange-800"
+        return "bg-orange-100 text-orange-800";
       case "endowment":
-        return "bg-yellow-100 text-yellow-800"
+        return "bg-yellow-100 text-yellow-800";
       default:
-        return "bg-gray-100 text-gray-800"
+        return "bg-gray-100 text-gray-800";
     }
-  }
+  };
 
   if (loading) {
-    return <div className="h-64 flex items-center justify-center">Loading fund sources...</div>
+    return <div className="h-64 flex items-center justify-center">Loading fund sources...</div>;
   }
+  // Editable UI for staff-dash (example: add/edit/delete)
+  // Only show edit controls if setFundingSources is available (i.e. in staff-dash)
+  // Example: Add new fund source
+  // ...existing code for rendering...
 
-  const totalFunding = fundSources.reduce((sum, fund) => sum + Number(fund.total_amount), 0)
+  const totalFunding = (fundingSources || []).reduce((sum: number, fund: any) => sum + Number(fund.total_amount), 0);
 
   return (
     <div className="space-y-6">
@@ -72,13 +51,13 @@ export function FundSourcesPublic() {
         <CardContent>
           <div className="text-3xl font-bold text-gray-900">₹{totalFunding.toLocaleString()}</div>
           <p className="text-gray-600 mt-2">
-            Diversified funding from {fundSources.length} sources supporting education, research, and operations
+            Diversified funding from {fundingSources.length} sources supporting education, research, and operations
           </p>
         </CardContent>
       </Card>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {fundSources.map((fund) => {
+        {fundingSources.map((fund) => {
           const utilizationRate =
             Number(fund.total_amount) > 0
               ? ((Number(fund.total_amount) - Number(fund.available_amount)) / Number(fund.total_amount)) * 100

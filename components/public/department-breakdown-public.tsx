@@ -1,62 +1,11 @@
 "use client";
-import { useEffect, useState } from "react";
-import { createClient } from "@/lib/supabase/client";
+import { useTransparencyData } from "./transparency-data-context";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { GraduationCap, Building } from "lucide-react";
-export default function DepartmentBreakdownPublic() {
-  type DepartmentType = {
-    name: string;
-    code: string;
-    type: string;
-    description: string;
-    allocated: number;
-    spent: number;
-  };
-  const [departments, setDepartments] = useState<DepartmentType[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    async function fetchData() {
-      const supabase = createClient();
-      const { data: departmentData } = await supabase
-        .from("budget_allocations")
-        .select(`allocated_amount, spent_amount, departments!inner(name, code, type, description)`)
-        .eq("fiscal_year", 2024);
-      // Group by department
-      const departmentTotals: Record<string, DepartmentType> = (departmentData || []).reduce(
-        (acc, item) => {
-          let dept;
-          if (Array.isArray(item.departments)) {
-            dept = item.departments[0];
-          } else {
-            dept = item.departments;
-          }
-          if (!dept || typeof dept !== 'object' || !('name' in dept)) return acc;
-          const key = dept.name;
-          if (!acc[key]) {
-            acc[key] = {
-              name: dept.name,
-              code: dept.code,
-              type: dept.type,
-              description: dept.description,
-              allocated: 0,
-              spent: 0,
-            };
-          }
-          acc[key].allocated += Number(item.allocated_amount);
-          acc[key].spent += Number(item.spent_amount);
-          return acc;
-        },
-        {} as Record<string, DepartmentType>
-      );
-      setDepartments(Object.values(departmentTotals || {}).sort((a, b) => (a as DepartmentType).allocated - (b as DepartmentType).allocated));
-      setLoading(false);
-    }
-    fetchData();
-  }, []);
-
+export function DepartmentBreakdownPublic() {
+  const { departments, setDepartments } = useTransparencyData() || {};
+  const loading = !departments;
   if (loading) return <div>Loading department breakdown...</div>;
   const academicDepartments = departments.filter((dept) => dept.type === "academic");
   const supportUnits = departments.filter((dept) => dept.type === "support");
@@ -183,4 +132,4 @@ export default function DepartmentBreakdownPublic() {
       </div>
     </div>
   );
-}
+
