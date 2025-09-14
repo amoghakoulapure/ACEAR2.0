@@ -38,8 +38,19 @@ export default function LoginPage() {
         return
       }
       
-      // On success, navigate to the dashboard.
-      router.push('/dashboard')
+      // On success, check user role and redirect accordingly
+      const { data: userData } = await supabase.auth.getUser();
+      if (userData?.user) {
+        // Fetch profile to check role
+        const { data: profileData } = await supabase.from("profiles").select("role").eq("id", userData.user.id).single();
+        if (profileData?.role === "staff") {
+          router.push("/staff-dash");
+        } else {
+          router.push("/dashboard");
+        }
+      } else {
+        router.push("/dashboard");
+      }
 
     } catch (e) {
         setError("An unexpected error occurred. Please try again.")

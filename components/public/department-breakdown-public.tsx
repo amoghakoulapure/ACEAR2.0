@@ -1,58 +1,68 @@
-import { createClient } from "@/lib/supabase/server"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Progress } from "@/components/ui/progress"
-import { GraduationCap, Building } from "lucide-react"
+"use client";
+import { useEffect, useState } from "react";
+import { createClient } from "@/lib/supabase/client";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
+import { GraduationCap, Building } from "lucide-react";
+export default function DepartmentBreakdownPublic() {
+  type DepartmentType = {
+    name: string;
+    code: string;
+    type: string;
+    description: string;
+    allocated: number;
+    spent: number;
+  };
+  const [departments, setDepartments] = useState<DepartmentType[]>([]);
+  const [loading, setLoading] = useState(true);
 
-export async function DepartmentBreakdownPublic() {
-  const supabase = await createClient()
+  useEffect(() => {
+    async function fetchData() {
+      const supabase = createClient();
+      const { data: departmentData } = await supabase
+        .from("budget_allocations")
+        .select(`allocated_amount, spent_amount, departments!inner(name, code, type, description)`)
+        .eq("fiscal_year", 2024);
+      // Group by department
+      const departmentTotals: Record<string, DepartmentType> = (departmentData || []).reduce(
+        (acc, item) => {
+          let dept;
+          if (Array.isArray(item.departments)) {
+            dept = item.departments[0];
+          } else {
+            dept = item.departments;
+          }
+          if (!dept || typeof dept !== 'object' || !('name' in dept)) return acc;
+          const key = dept.name;
+          if (!acc[key]) {
+            acc[key] = {
+              name: dept.name,
+              code: dept.code,
+              type: dept.type,
+              description: dept.description,
+              allocated: 0,
+              spent: 0,
+            };
+          }
+          acc[key].allocated += Number(item.allocated_amount);
+          acc[key].spent += Number(item.spent_amount);
+          return acc;
+        },
+        {} as Record<string, DepartmentType>
+      );
+      setDepartments(Object.values(departmentTotals || {}).sort((a, b) => (a as DepartmentType).allocated - (b as DepartmentType).allocated));
+      setLoading(false);
+    }
+    fetchData();
+  }, []);
 
-  const { data: departmentData } = await supabase
-    .from("budget_allocations")
-    .select(`
-      allocated_amount,
-      spent_amount,
-      departments!inner(name, code, type, description)
-    `)
-    .eq("fiscal_year", 2024)
-
-  // Group by department
-  const departmentTotals = departmentData?.reduce(
-    (acc, item) => {
-      let dept: { name: string; code: string; type: string; description: string } | undefined;
-      if (Array.isArray(item.departments)) {
-        dept = item.departments[0] as { name: string; code: string; type: string; description: string };
-      } else {
-        dept = item.departments as { name: string; code: string; type: string; description: string };
-      }
-      if (!dept || typeof dept !== 'object' || !('name' in dept)) return acc;
-
-      const key = dept.name;
-      if (!acc[key]) {
-        acc[key] = {
-          name: dept.name,
-          code: dept.code,
-          type: dept.type,
-          description: dept.description,
-          allocated: 0,
-          spent: 0,
-        };
-      }
-      acc[key].allocated += Number(item.allocated_amount);
-      acc[key].spent += Number(item.spent_amount);
-      return acc;
-    },
-    {} as Record<string, { name: string; code: string; type: string; description: string; allocated: number; spent: number }>,
-  )
-
-  const departments = Object.values(departmentTotals || {}).sort((a, b) => b.allocated - a.allocated)
-
-  const academicDepartments = departments.filter((dept) => dept.type === "academic")
-  const supportUnits = departments.filter((dept) => dept.type === "support")
-
-  const totalAcademic = academicDepartments.reduce((sum, dept) => sum + dept.allocated, 0)
-  const totalSupport = supportUnits.reduce((sum, dept) => sum + dept.allocated, 0)
-  const grandTotal = totalAcademic + totalSupport
+  if (loading) return <div>Loading department breakdown...</div>;
+  const academicDepartments = departments.filter((dept) => dept.type === "academic");
+  const supportUnits = departments.filter((dept) => dept.type === "support");
+  const totalAcademic = academicDepartments.reduce((sum, dept) => sum + dept.allocated, 0);
+  const totalSupport = supportUnits.reduce((sum, dept) => sum + dept.allocated, 0);
+  const grandTotal = totalAcademic + totalSupport;
 
   return (
     <div className="space-y-8">
@@ -71,7 +81,6 @@ export async function DepartmentBreakdownPublic() {
             <p className="text-xs text-blue-600 mt-1">{academicDepartments.length} departments</p>
           </CardContent>
         </Card>
-
         <Card className="bg-gradient-to-br from-green-50 to-green-100 border-green-200">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-lg font-medium text-green-900">Support Services</CardTitle>
@@ -86,7 +95,6 @@ export async function DepartmentBreakdownPublic() {
           </CardContent>
         </Card>
       </div>
-
       {/* Academic Departments */}
       <div>
         <h3 className="text-2xl font-bold text-gray-900 mb-4 flex items-center">
@@ -95,8 +103,7 @@ export async function DepartmentBreakdownPublic() {
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {academicDepartments.map((dept) => {
-            const utilizationRate = dept.allocated > 0 ? (dept.spent / dept.allocated) * 100 : 0
-
+            const utilizationRate = dept.allocated > 0 ? (dept.spent / dept.allocated) * 100 : 0;
             return (
               <Card key={dept.name} className="hover:shadow-md transition-shadow">
                 <CardHeader>
@@ -127,11 +134,10 @@ export async function DepartmentBreakdownPublic() {
                   </div>
                 </CardContent>
               </Card>
-            )
+            );
           })}
         </div>
       </div>
-
       {/* Support Units */}
       <div>
         <h3 className="text-2xl font-bold text-gray-900 mb-4 flex items-center">
@@ -140,8 +146,7 @@ export async function DepartmentBreakdownPublic() {
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {supportUnits.map((dept) => {
-            const utilizationRate = dept.allocated > 0 ? (dept.spent / dept.allocated) * 100 : 0
-
+            const utilizationRate = dept.allocated > 0 ? (dept.spent / dept.allocated) * 100 : 0;
             return (
               <Card key={dept.name} className="hover:shadow-md transition-shadow">
                 <CardHeader>
@@ -172,10 +177,10 @@ export async function DepartmentBreakdownPublic() {
                   </div>
                 </CardContent>
               </Card>
-            )
+            );
           })}
         </div>
       </div>
     </div>
-  )
+  );
 }
