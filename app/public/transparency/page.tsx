@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react"
+import { CurrencyProvider, useCurrency } from "@/components/public/currency-context"
 import { PublicHeader } from "@/components/public/public-header"
 import BudgetOverviewPublic from "@/components/public/budget-overview-public"
 import { FundSourcesPublic } from "@/components/public/fund-sources-public"
@@ -10,21 +10,28 @@ import { ContactSection } from "@/components/public/contact-section"
 import Chatbot from "@/components/chatbot/chatbot"
 
 export default function PublicTransparencyPage() {
-  // Multi-currency toggle state
-  const [currency, setCurrency] = useState<'INR' | 'USD'>('INR');
-  // Simple conversion rate (for demo, should be dynamic in production)
-  const conversionRate = 0.012; // 1 INR = 0.012 USD
-  // ...existing code...
-  // Search/filter state
+  // Ensure demo data is available to all public components
+  const { TransparencyDataProvider } = require("@/components/public/transparency-data-context");
+  return (
+    <CurrencyProvider>
+      <TransparencyDataProvider>
+        <TransparencyPageContent />
+      </TransparencyDataProvider>
+    </CurrencyProvider>
+  );
+}
+
+import { useState } from "react";
+
+function TransparencyPageContent() {
+  const { currency, setCurrency, conversionRate } = useCurrency();
   const [searchTerm, setSearchTerm] = useState("");
   const [departmentFilter, setDepartmentFilter] = useState("");
   const [vendorFilter, setVendorFilter] = useState("");
 
-  // ...existing code...
   return (
     <div className="min-h-screen bg-gray-50">
       <PublicHeader />
-
       <main className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
         {/* Currency Toggle */}
         <div className="flex justify-end mb-4">
@@ -45,7 +52,6 @@ export default function PublicTransparencyPage() {
             patterns, and fund sources to understand how we invest in education and research.
           </p>
         </div>
-
         {/* Search & Filter Bar */}
         <div className="mb-8 flex flex-col md:flex-row gap-4 items-center justify-between">
           <input
@@ -72,30 +78,30 @@ export default function PublicTransparencyPage() {
         </div>
 
         {/* Key Statistics */}
-        <TransparencyStats />
+        <TransparencyStats searchTerm={searchTerm} departmentFilter={departmentFilter} vendorFilter={vendorFilter} />
 
         {/* Budget Overview */}
         <section id="budget-overview" className="mb-12">
           <h2 className="text-3xl font-bold text-gray-900 mb-6">Budget Overview</h2>
-          <BudgetOverviewPublic currency={currency} conversionRate={conversionRate} />
+          <BudgetOverviewPublic currency={currency} conversionRate={conversionRate} searchTerm={searchTerm} departmentFilter={departmentFilter} vendorFilter={vendorFilter} />
         </section>
 
         {/* Fund Sources */}
         <section id="fund-sources" className="mb-12">
           <h2 className="text-3xl font-bold text-gray-900 mb-6">Funding Sources</h2>
-          <FundSourcesPublic />
+          <FundSourcesPublic currency={currency} conversionRate={conversionRate} searchTerm={searchTerm} departmentFilter={departmentFilter} vendorFilter={vendorFilter} />
         </section>
 
         {/* Spending Trends */}
         <section id="spending-trends" className="mb-12">
           <h2 className="text-3xl font-bold text-gray-900 mb-6">Spending Trends</h2>
-          <SpendingTrendsPublic />
+          <SpendingTrendsPublic currency={currency} conversionRate={conversionRate} searchTerm={searchTerm} departmentFilter={departmentFilter} vendorFilter={vendorFilter} />
         </section>
 
         {/* Department Breakdown */}
         <section id="departments" className="mb-12">
           <h2 className="text-3xl font-bold text-gray-900 mb-6">Department Investments</h2>
-          <DepartmentBreakdownPublic />
+          <DepartmentBreakdownPublic currency={currency} conversionRate={conversionRate} searchTerm={searchTerm} departmentFilter={departmentFilter} vendorFilter={vendorFilter} />
         </section>
 
         {/* Community Feedback Button */}

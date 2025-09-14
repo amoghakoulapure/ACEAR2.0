@@ -15,47 +15,53 @@ export default function SignUpPage() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
+  const [staffType, setStaffType] = useState("")
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [success, setSuccess] = useState(false)
+  const [verificationSent, setVerificationSent] = useState(false);
   const router = useRouter()
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault()
     setError(null) // Clear any previous errors
 
+    if (!staffType) {
+      setError("Please select your staff type.");
+      return;
+    }
     if (password !== confirmPassword) {
       setError("Passwords do not match")
       return
     }
-
     if (password.length < 6) {
       setError("Password must be at least 6 characters long")
       return
     }
-
-    if (!email.includes("@") || email.length < 5) {
-      setError("Please enter a valid email address")
-      return
+    // Professional Gmail validation: must end with @gmail.com and not be a personal address
+    if (!email.match(/^[a-zA-Z0-9._%+-]+@gmail\.com$/) || email.startsWith("personal")) {
+      setError("Please enter your professional Gmail address (not a personal one)");
+      return;
     }
 
     const supabase = createClient()
     setIsLoading(true)
 
     try {
-      const { error } = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
           emailRedirectTo: `${window.location.origin}/auth/callback`,
         },
       })
-
       if (error) throw error
-
-      setSuccess(true)
-      await new Promise((resolve) => setTimeout(resolve, 1000))
-      window.location.replace("/dashboard")
+      // Save staff type to profile table
+      if (data?.user?.id) {
+        await supabase.from("profiles").upsert({ id: data.user.id, role: staffType });
+      }
+      setVerificationSent(true);
+      setSuccess(true);
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : "An error occurred"
       if (errorMessage.includes("Invalid email") || errorMessage.includes("invalid email")) {
@@ -72,29 +78,30 @@ export default function SignUpPage() {
     }
   }
 
-  if (success) {
+  if (verificationSent) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 to-emerald-100 p-4">
         <div className="w-full max-w-md">
           <Card className="shadow-xl">
             <CardHeader className="text-center">
-              <CardTitle className="text-2xl font-bold text-green-700">Account Created!</CardTitle>
+              <CardTitle className="text-2xl font-bold text-green-700">Verify Your Email</CardTitle>
               <CardDescription className="text-green-600">
-                Welcome to ACEAR Institute Financial Transparency System
+                A verification email has been sent to <span className="font-semibold">{email}</span>.<br />
+                Please check your inbox and follow the link to activate your account.
               </CardDescription>
             </CardHeader>
             <CardContent className="text-center">
               <p className="text-sm text-gray-600 mb-4">
-                Your account has been created successfully. Redirecting to dashboard...
+                After verifying, you can log in to access the dashboard.
               </p>
-              <Link href="/dashboard">
-                <Button className="w-full">Go to Dashboard</Button>
+              <Link href="/auth/login">
+                <Button className="w-full">Go to Login</Button>
               </Link>
             </CardContent>
           </Card>
         </div>
       </div>
-    )
+    );
   }
 
   return (
@@ -109,6 +116,21 @@ export default function SignUpPage() {
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSignUp} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="staffType">Staff Type</Label>
+                <select
+                  id="staffType"
+                  required
+                  value={staffType}
+                  onChange={e => setStaffType(e.target.value)}
+                  className="border p-2 rounded w-full"
+                >
+                  <option value="">Select staff type...</option>
+                  <option value="staff">Staff</option>
+                  <option value="admin">Admin</option>
+                  <option value="student">Student</option>
+                </select>
+              </div>
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
                 <Input

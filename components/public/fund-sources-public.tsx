@@ -7,10 +7,35 @@ import { Progress } from "@/components/ui/progress"
 import { Calendar, DollarSign } from "lucide-react"
 
 // Use shared context type
+import { useCurrency } from "./currency-context"
 
-export function FundSourcesPublic() {
+export function FundSourcesPublic({ currency = 'INR', conversionRate = 0.012, searchTerm = '', departmentFilter = '', vendorFilter = '' }) {
+  let currencyCtx;
+  try {
+    currencyCtx = useCurrency();
+  } catch {
+    currencyCtx = undefined;
+  }
+  const effectiveCurrency = currency ?? currencyCtx?.currency ?? 'INR';
+  const effectiveConversionRate = conversionRate ?? currencyCtx?.conversionRate ?? 0.012;
   const { fundingSources, setFundingSources } = useTransparencyData() || {};
   const loading = !fundingSources;
+
+  if (loading) {
+    return <div className="h-64 flex items-center justify-center">Loading fund sources...</div>;
+  }
+
+  // Filter fundingSources by searchTerm, departmentFilter, vendorFilter
+  const filteredFundingSources = (fundingSources || []).filter(fund => {
+    const searchLower = (searchTerm || '').toLowerCase();
+    const deptLower = (departmentFilter || '').toLowerCase();
+    const vendorLower = (vendorFilter || '').toLowerCase();
+    return (
+      (!searchLower || fund.name.toLowerCase().includes(searchLower)) &&
+      (!deptLower || fund.name.toLowerCase().includes(deptLower)) &&
+      (!vendorLower || fund.name.toLowerCase().includes(vendorLower))
+    );
+  });
 
   const getFundTypeColor = (type: string) => {
     switch (type) {
@@ -24,10 +49,12 @@ export function FundSourcesPublic() {
         return "bg-orange-100 text-orange-800";
       case "endowment":
         return "bg-yellow-100 text-yellow-800";
+
       default:
         return "bg-gray-100 text-gray-800";
     }
   };
+
 
   if (loading) {
     return <div className="h-64 flex items-center justify-center">Loading fund sources...</div>;
@@ -37,7 +64,8 @@ export function FundSourcesPublic() {
   // Example: Add new fund source
   // ...existing code for rendering...
 
-  const totalFunding = (fundingSources || []).reduce((sum: number, fund: any) => sum + Number(fund.total_amount), 0);
+  const conversion = effectiveCurrency === 'USD' ? effectiveConversionRate : 1;
+  const totalFunding = (filteredFundingSources || []).reduce((sum: number, fund: any) => sum + Number(fund.total_amount) * conversion, 0);
 
   return (
     <div className="space-y-6">
@@ -49,7 +77,9 @@ export function FundSourcesPublic() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-3xl font-bold text-gray-900">₹{totalFunding.toLocaleString()}</div>
+          <div className="text-3xl font-bold text-gray-900">
+            {effectiveCurrency === 'USD' ? `$${totalFunding.toLocaleString(undefined, { maximumFractionDigits: 2 })}` : `₹${totalFunding.toLocaleString()}`}
+          </div>
           <p className="text-gray-600 mt-2">
             Diversified funding from {fundingSources.length} sources supporting education, research, and operations
           </p>
@@ -57,7 +87,7 @@ export function FundSourcesPublic() {
       </Card>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {fundingSources.map((fund) => {
+  {filteredFundingSources.map((fund) => {
           const utilizationRate =
             Number(fund.total_amount) > 0
               ? ((Number(fund.total_amount) - Number(fund.available_amount)) / Number(fund.total_amount)) * 100
@@ -72,7 +102,11 @@ export function FundSourcesPublic() {
                     <Badge className={getFundTypeColor(fund.type)}>{fund.type.replace("_", " ").toUpperCase()}</Badge>
                   </div>
                   <div className="text-right">
-                    <div className="text-2xl font-bold">₹{Number(fund.total_amount).toLocaleString()}</div>
+                    <div className="text-2xl font-bold">
+                      {effectiveCurrency === 'USD'
+                        ? `$${(Number(fund.total_amount) * conversion).toLocaleString(undefined, { maximumFractionDigits: 2 })}`
+                        : `₹${Number(fund.total_amount).toLocaleString()}`}
+                    </div>
                     <div className="text-sm text-muted-foreground">Total Amount</div>
                   </div>
                 </div>
@@ -85,13 +119,17 @@ export function FundSourcesPublic() {
                     <div className="flex justify-between text-sm">
                       <span>Utilized:</span>
                       <span className="font-medium">
-                        ₹{(Number(fund.total_amount) - Number(fund.available_amount)).toLocaleString()}
+                        {effectiveCurrency === 'USD'
+                          ? `$${((Number(fund.total_amount) - Number(fund.available_amount)) * conversion).toLocaleString(undefined, { maximumFractionDigits: 2 })}`
+                          : `₹${(Number(fund.total_amount) - Number(fund.available_amount)).toLocaleString()}`}
                       </span>
                     </div>
                     <div className="flex justify-between text-sm">
                       <span>Available:</span>
                       <span className="font-medium text-green-600">
-                        ₹{Number(fund.available_amount).toLocaleString()}
+                        {effectiveCurrency === 'USD'
+                          ? `$${(Number(fund.available_amount) * conversion).toLocaleString(undefined, { maximumFractionDigits: 2 })}`
+                          : `₹${Number(fund.available_amount).toLocaleString()}`}
                       </span>
                     </div>
                     <Progress value={utilizationRate} className="h-2" />

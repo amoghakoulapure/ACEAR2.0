@@ -9,11 +9,17 @@ export default function StaffDashboard() {
   const router = useRouter();
 
   useEffect(() => {
-    // Check if user is logged in
+    // Check if user is logged in and is staff
     const supabase = createClient();
-    supabase.auth.getUser().then(({ data }) => {
+    supabase.auth.getUser().then(async ({ data }) => {
       if (!data?.user) {
         router.replace("/auth/login");
+        return;
+      }
+      // Fetch profile and check role
+      const { data: profileData, error: profileError } = await supabase.from("profiles").select("role").eq("id", data.user.id).single();
+      if (profileError || !profileData || profileData.role !== "staff") {
+        router.replace("/dashboard");
       }
     });
   }, [router]);

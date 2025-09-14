@@ -5,21 +5,38 @@ import { createClient } from "@/lib/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DollarSign, TrendingUp, Users, Building } from "lucide-react";
 
-export default function TransparencyStats() {
+interface TransparencyStatsProps {
+  searchTerm?: string;
+  departmentFilter?: string;
+  vendorFilter?: string;
+}
+
+export default function TransparencyStats({ searchTerm = '', departmentFilter = '', vendorFilter = '' }: TransparencyStatsProps) {
   const [stats, setStats] = useState({ totalAllocated: 0, totalSpent: 0, departmentsCount: 0, fundSourcesCount: 0 });
   const [loading, setLoading] = useState(true);
   // Demo random stats for hackathon
   useEffect(() => {
+    // Demo: filter stats based on search/filter props
+    let filteredStats = {
+      totalAllocated: 12000000,
+      totalSpent: 9500000,
+      departmentsCount: 6,
+      fundSourcesCount: 5,
+    };
+    if (searchTerm || departmentFilter || vendorFilter) {
+      // For demo, just reduce numbers if any filter is applied
+      filteredStats = {
+        totalAllocated: 8000000,
+        totalSpent: 6000000,
+        departmentsCount: 3,
+        fundSourcesCount: 2,
+      };
+    }
     setTimeout(() => {
-      setStats({
-        totalAllocated: 12000000,
-        totalSpent: 9500000,
-        departmentsCount: 6,
-        fundSourcesCount: 5,
-      });
+      setStats(filteredStats);
       setLoading(false);
     }, 500);
-  }, []);
+  }, [searchTerm, departmentFilter, vendorFilter]);
   const utilizationRate = stats.totalAllocated > 0 ? (stats.totalSpent / stats.totalAllocated) * 100 : 0;
   if (loading) return <div>Loading statistics...</div>;
   return (
