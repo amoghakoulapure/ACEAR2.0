@@ -5,6 +5,7 @@ import { SpendingTrendsPublic } from "@/components/public/spending-trends-public
 import { DepartmentBreakdownPublic } from "@/components/public/department-breakdown-public"
 import { TransparencyStats } from "@/components/public/transparency-stats"
 import { ContactSection } from "@/components/public/contact-section"
+import Chatbot from "@/components/chatbot/chatbot"
 
 export default function PublicTransparencyPage() {
   return (
@@ -63,6 +64,8 @@ export default function PublicTransparencyPage() {
           </div>
         </div>
       </footer>
+
+      <Chatbot />
     </div>
   )
 }

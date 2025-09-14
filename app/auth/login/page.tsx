@@ -1,7 +1,6 @@
 "use client"
 
 import type React from "react"
-
 import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -20,38 +19,33 @@ export default function LoginPage() {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
-
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-    if (!emailRegex.test(email)) {
-      setError("Please enter a valid email address")
-      return
-    }
-
-    const supabase = createClient()
     setIsLoading(true)
     setError(null)
 
     try {
+      const supabase = createClient()
       const { error } = await supabase.auth.signInWithPassword({
         email,
         password,
       })
-      
-      if (error) throw error
 
-      // Direct navigation to dashboard
-      window.location.href = "/dashboard"
-
-    } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : "An error occurred"
-      if (errorMessage.includes("Invalid email")) {
-        setError("Please enter a valid email address")
-      } else if (errorMessage.includes("Invalid login credentials")) {
-        setError("Invalid email or password")
-      } else {
-        setError(errorMessage)
+      if (error) {
+        if (error.message.includes("Invalid login credentials")) {
+          setError("Invalid email or password. Please try again.")
+        } else {
+          setError("An unexpected error occurred. Please try again.")
+        }
+        return
       }
+      
+      // On success, navigate to the dashboard.
+      router.push('/dashboard')
+
+    } catch (e) {
+        setError("An unexpected error occurred. Please try again.")
     } finally {
+      // This is critical: ensure loading state is always reset, even after
+      // navigation or if an unexpected error occurs.
       setIsLoading(false)
     }
   }
@@ -62,7 +56,7 @@ export default function LoginPage() {
         <Card className="shadow-xl">
           <CardHeader className="text-center">
             <CardTitle className="text-2xl font-bold text-gray-900">ACEAR Institute</CardTitle>
-            <CardDescription className="text-gray-600">Financial Transparency System</CardDescription>
+            <CardDescription className="text-gray-600">Financial Transparency System Login</CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleLogin} className="space-y-4">
@@ -75,6 +69,7 @@ export default function LoginPage() {
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
+                  disabled={isLoading}
                 />
               </div>
               <div className="space-y-2">
@@ -85,6 +80,7 @@ export default function LoginPage() {
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
+                  disabled={isLoading}
                 />
               </div>
               {error && <div className="text-sm text-red-600 bg-red-50 p-3 rounded-md">{error}</div>}
@@ -92,13 +88,21 @@ export default function LoginPage() {
                 {isLoading ? "Signing in..." : "Sign In"}
               </Button>
             </form>
-            <div className="mt-6 text-center text-sm space-y-2">
-              <Link href="/auth/signup" className="text-blue-600 hover:text-blue-800 underline block">
-                Don't have an account? Sign Up
-              </Link>
-              <Link href="/public/transparency" className="text-blue-600 hover:text-blue-800 underline">
-                View Public Financial Data
-              </Link>
+            <Button 
+              variant="outline" 
+              className="w-full mt-4" 
+              onClick={() => router.push('/public/transparency')}
+              disabled={isLoading}
+            >
+              Back to Public View
+            </Button>
+            <div className="mt-6 text-center text-sm">
+              <p>
+                Don't have an account?{" "}
+                <Link href="/auth/signup" className="text-blue-600 hover:text-blue-800 underline">
+                  Sign Up
+                </Link>
+              </p>
             </div>
           </CardContent>
         </Card>
