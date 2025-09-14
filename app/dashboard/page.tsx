@@ -45,6 +45,13 @@ export default async function DashboardPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
       <DashboardHeader user={data.user} profile={profile} />
+      <div className="px-4 pt-4">
+        <a href="/auth/login">
+          <button className="bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-2 px-4 rounded shadow">
+            ← Back to Login
+          </button>
+        </a>
+      </div>
       <main className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">{renderDashboard()}</main>
     </div>
   )

@@ -5,6 +5,13 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { PaperAirplaneIcon } from '@heroicons/react/24/solid';
 
 const Chatbot = () => {
+  // Import public financial data context
+  const { useTransparencyData } = require("@/components/public/transparency-data-context");
+  const {
+    fundingSources,
+    spendingTrends,
+    departments,
+  } = useTransparencyData() || {};
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<{ sender: 'user' | 'bot'; text: string }[]>([]);
   const [inputValue, setInputValue] = useState('');
@@ -34,7 +41,12 @@ const Chatbot = () => {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ prompt: currentInput }),
+        body: JSON.stringify({
+          prompt: currentInput,
+          fundingSources,
+          spendingTrends,
+          departments,
+        }),
       });
 
       if (!response.ok) {

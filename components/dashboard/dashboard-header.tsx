@@ -107,7 +107,7 @@ export function DashboardHeader({ user, profile }: DashboardHeaderProps) {
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="relative h-8 w-8 rounded-full">
                   <Avatar className="h-8 w-8">
-                    <AvatarInitials>{profile.full_name.charAt(0)}</AvatarInitials>
+                    <AvatarInitials>{profile?.full_name ? profile.full_name.charAt(0) : "U"}</AvatarInitials>
                     <AvatarFallback>U</AvatarFallback>
                   </Avatar>
                 </Button>
