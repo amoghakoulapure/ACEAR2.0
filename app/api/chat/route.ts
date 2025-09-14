@@ -1,6 +1,7 @@
 
+
 import { NextRequest, NextResponse } from 'next/server';
-import { VertexAI } from '@google-cloud/vertexai';
+
 
 export async function POST(req: NextRequest) {
   try {
@@ -10,29 +11,35 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Prompt is required' }, { status: 400 });
     }
 
-    const project = process.env.GOOGLE_CLOUD_PROJECT;
-    const location = process.env.GOOGLE_CLOUD_LOCATION;
 
-    if (!project || !location) {
-      throw new Error('Google Cloud project or location not configured');
+    // Call Gorq's API endpoint with API key
+    const gorqApiKey = process.env.GORQ_API_KEY;
+    if (!gorqApiKey) {
+      throw new Error('GORQ API key not configured');
     }
-
-    const vertex_ai = new VertexAI({ project, location });
-
-    const generativeModel = vertex_ai.getGenerativeModel({
-      model: 'gemini-1.5-flash-001',
+    const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${gorqApiKey}`,
+      },
+      body: JSON.stringify({
+        model: 'meta-llama/llama-4-scout-17b-16e-instruct',
+        messages: [
+          { role: 'system', content: 'You are an assistant that answers questions about the ACEAR Institute website.' },
+          { role: 'user', content: prompt },
+        ],
+        max_tokens: 256,
+      }),
     });
 
-    const resp = await generativeModel.generateContent(prompt);
-
-    if (!resp.response || !resp.response.candidates || resp.response.candidates.length === 0) {
-        throw new Error("No response content from the model.");
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error?.message || 'Failed to get response from Gorq');
     }
-    
-    // Aggregate the text from all parts of the response for robustness.
-    const botResponse = resp.response.candidates[0].content.parts
-      .map(part => part.text)
-      .join(''); 
+
+    const data = await response.json();
+    const botResponse = data.choices?.[0]?.message?.content || 'Sorry, I could not generate a response.';
 
     return NextResponse.json({ response: botResponse });
 
@@ -42,3 +49,5 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }
+
+
